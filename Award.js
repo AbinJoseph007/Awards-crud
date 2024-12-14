@@ -6,6 +6,7 @@ const axios = require('axios');
 require('dotenv').config();
 
 
+
 const app = express();
 app.use(express.json());
 
@@ -237,6 +238,12 @@ async function getAirtableClassRecords() {
   }
   
   syncAirtableToWebflow();
+
+  cron.schedule('*/30 * * * * *', async () => {
+    console.log('Starting the sync process...');
+    await syncAirtableToWebflow();
+    console.log('Sync process completed.');
+  });
   
   
 const PORT = process.env.PORT || 6000;
