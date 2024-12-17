@@ -150,6 +150,7 @@ async function getAirtableClassRecords() {
         body: JSON.stringify({
           fieldData: {
             name: fieldsToUpdate.name || '',
+            year: fieldsToUpdate.year || '',
             slug: fieldsToUpdate.name ? fieldsToUpdate.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') : '',
             airtableid: fieldsToUpdate.airtableid || '',
             'award-winner-image': fieldsToUpdate['award-winner-image'] || '',
