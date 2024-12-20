@@ -73,13 +73,58 @@ async function getAirtableClassRecords() {
     return data.items;
   }
   
-  function hasDifferences(airtableFields, webflowFields) {
-    return (
-      airtableFields.name !== webflowFields.name ||
-      airtableFields.year !== webflowFields.year||
-      airtableFields['award-winner-image'] !== webflowFields['award-winner-image']
-    );
+  function normalizeUrl(url) {
+    if (!url) return '';
+    try {
+      let normalizedUrl = url.trim();
+  
+      // Remove query parameters (everything after '?')
+      normalizedUrl = normalizedUrl.split('?')[0];
+  
+      // Remove trailing slash if present
+      if (normalizedUrl.endsWith('/')) {
+        normalizedUrl = normalizedUrl.slice(0, -1);
+      }
+  
+      return normalizedUrl;
+    } catch (error) {
+      console.error('Error normalizing URL:', error);
+      return url;
+    }
   }
+  
+  function sanitizeField(value) {
+    // If value is an object with a URL, normalize and trim the URL
+    if (value && typeof value === 'object' && value.url) {
+      const sanitizedUrl = normalizeUrl(value.url); // Normalize the URL before returning
+      console.log('Sanitized Image URL:', sanitizedUrl);
+      return sanitizedUrl;
+    }
+    // If it's a string, just trim and return it
+    return typeof value === 'string' ? value.trim() : '';
+  }
+  
+  function hasDifferences(airtableFields, webflowFields) {
+    const nameDiff = sanitizeField(airtableFields.name) !== sanitizeField(webflowFields.name);
+    const yearDiff = sanitizeField(airtableFields.year) !== sanitizeField(webflowFields.year);
+    
+    // Normalize and compare image URLs
+    const airtableImage = sanitizeField(airtableFields['award-winner-image']);
+    const webflowImage = sanitizeField(webflowFields['award-winner-image']);
+    const imageDiff = airtableImage !== webflowImage;
+    
+    console.log('Comparing Airtable Image URL:', airtableImage);
+    console.log('Comparing Webflow Image URL:', webflowImage);
+    console.log('Image Difference:', imageDiff);
+  
+    console.log('Comparing Airtable Fields:', airtableFields);
+    console.log('Comparing Webflow Fields:', webflowFields);
+    console.log('Differences:', { nameDiff, yearDiff, imageDiff });
+    
+    return nameDiff || yearDiff || imageDiff;
+  }
+  
+  
  
   async function syncAirtableToWebflow() {
     const classRecords = await getAirtableClassRecords();
@@ -246,6 +291,102 @@ async function getAirtableClassRecords() {
     console.log('Sync process completed.');
   });
   
+  const SITE_ID = "670d37b3620fd9656047ce2d"; 
+  const API_BASE_URL = "https://api.webflow.com/v2";
+  
+  // Publish staged items of purchases
+  async function publishStagedItems() {
+    try {
+      // Fetch all collections for the site
+      const collectionsResponse = await axios.get(`${API_BASE_URL}/sites/${SITE_ID}/collections`, {
+        headers: {
+          Authorization: `Bearer ${webflowApiKey}`,
+          "Accept-Version": "1.0.0",
+        },
+      });
+  
+      const collections = collectionsResponse.data.collections || [];
+      if (!collections.length) {
+        console.log("No collections found.");
+        return;
+      }
+  
+      console.log(
+        "Available Collections:",
+        collections.map((col) => ({
+          id: col.id,
+          name: col.displayName,
+          slug: col.slug,
+        }))
+      );
+  
+      const targetCollection = collections.find(
+        (collection) => collection.displayName === "Lifetime Achievement Award Winners"
+      );
+  
+      if (!targetCollection) {
+        console.log("Target collection not found. Ensure the collection name matches exactly.");
+        return;
+      }
+  
+      const COLLECTION_ID = targetCollection.id;
+      console.log(`Using Collection ID: ${COLLECTION_ID}`);
+  
+      // Fetch items in the collection
+      const itemsResponse = await axios.get(`${API_BASE_URL}/collections/${COLLECTION_ID}/items`, {
+        headers: {
+          Authorization: `Bearer ${webflowApiKey}`,
+          "Accept-Version": "1.0.0",
+        },
+      });
+  
+      const items = itemsResponse.data.items || [];
+  
+      // Filter out items where 'lastPublished' is null or if they have been updated since last publication
+      const stagedItemIds = items
+        .filter((item) => {
+          // If the item has not been published yet or has been updated since its last publish
+          return item.lastPublished === null || new Date(item.lastUpdated) > new Date(item.lastPublished);
+        })
+        .map((item) => item.id);
+  
+      if (!stagedItemIds.length) {
+        console.log("No items to publish.");
+        return;
+      }
+  
+      console.log(`Items ready for publishing: ${stagedItemIds}`);
+  
+      // Publish the items
+      const publishResponse = await axios.post(
+        `${API_BASE_URL}/collections/${COLLECTION_ID}/items/publish`,
+        { itemIds: stagedItemIds },
+        {
+          headers: {
+            Authorization: `Bearer ${webflowApiKey}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+  
+      console.log("Publish Response:", publishResponse.data);
+    } catch (error) {
+      console.error("Error publishing staged items:", error.response?.data || error.message);
+    }
+  }
+  
+  publishStagedItems();
+  
+  
+  async function runPeriodicallys(intervalMs) {
+    console.log("Starting periodic sync...");
+    setInterval(async () => {
+      console.log(`Running sync at ${new Date().toISOString()}`);
+      await publishStagedItems(); 
+    }, intervalMs);
+  }
+  
+  runPeriodicallys(15 * 1000); 
   
 const PORT = process.env.PORT || 6000;
 app.listen(PORT, () => {
