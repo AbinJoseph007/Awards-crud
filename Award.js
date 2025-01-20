@@ -180,7 +180,7 @@ async function getAirtableClassRecords() {
 
   // Update Webflow item 
   async function updateWebflowItem(collectionId, webflowId, fieldsToUpdate) {
-    const url = `https://api.webflow.com/v2/collections/${webflowCollectionId}/items/${webflowId}`;
+    const url = `https://api.webflow.com/v2/collections/${webflowCollectionId}/items/${webflowId}/live`;
     console.log('Updating Webflow item with ID:', webflowId);
   
     try {
@@ -221,7 +221,7 @@ async function getAirtableClassRecords() {
   
   // Delete a Webflow item
   async function deleteWebflowItem(webflowId) {
-    const url = `https://api.webflow.com/v2/collections/${webflowCollectionId}/items/${webflowId}`;
+    const url = `https://api.webflow.com/v2/collections/${webflowCollectionId}/items/${webflowId}/live`;
     try {
       const response = await fetch(url, {
         method: 'DELETE',
@@ -245,7 +245,7 @@ async function getAirtableClassRecords() {
   
   // Add a new item to Webflow
   async function addWebflowItem(airtableFields) {
-    const url = `https://api.webflow.com/v2/collections/${webflowCollectionId}/items`;
+    const url = `https://api.webflow.com/v2/collections/${webflowCollectionId}/items/live`;
     console.log('Adding new Webflow item:', airtableFields);
   
     try {
@@ -291,102 +291,102 @@ async function getAirtableClassRecords() {
     console.log('Sync process completed.');
   });
   
-  const SITE_ID = "670d37b3620fd9656047ce2d"; 
-  const API_BASE_URL = "https://api.webflow.com/v2";
+  // const SITE_ID = "670d37b3620fd9656047ce2d"; 
+  // const API_BASE_URL = "https://api.webflow.com/v2";
   
-  // Publish staged items of purchases
-  async function publishStagedItems() {
-    try {
-      // Fetch all collections for the site
-      const collectionsResponse = await axios.get(`${API_BASE_URL}/sites/${SITE_ID}/collections`, {
-        headers: {
-          Authorization: `Bearer ${webflowApiKey}`,
-          "Accept-Version": "1.0.0",
-        },
-      });
+  // // Publish staged items of purchases
+  // async function publishStagedItems() {
+  //   try {
+  //     // Fetch all collections for the site
+  //     const collectionsResponse = await axios.get(`${API_BASE_URL}/sites/${SITE_ID}/collections`, {
+  //       headers: {
+  //         Authorization: `Bearer ${webflowApiKey}`,
+  //         "Accept-Version": "1.0.0",
+  //       },
+  //     });
   
-      const collections = collectionsResponse.data.collections || [];
-      if (!collections.length) {
-        console.log("No collections found.");
-        return;
-      }
+  //     const collections = collectionsResponse.data.collections || [];
+  //     if (!collections.length) {
+  //       console.log("No collections found.");
+  //       return;
+  //     }
   
-      console.log(
-        "Available Collections:",
-        collections.map((col) => ({
-          id: col.id,
-          name: col.displayName,
-          slug: col.slug,
-        }))
-      );
+  //     console.log(
+  //       "Available Collections:",
+  //       collections.map((col) => ({
+  //         id: col.id,
+  //         name: col.displayName,
+  //         slug: col.slug,
+  //       }))
+  //     );
   
-      const targetCollection = collections.find(
-        (collection) => collection.displayName === "Lifetime Achievement Award Winners"
-      );
+  //     const targetCollection = collections.find(
+  //       (collection) => collection.displayName === "Lifetime Achievement Award Winners"
+  //     );
   
-      if (!targetCollection) {
-        console.log("Target collection not found. Ensure the collection name matches exactly.");
-        return;
-      }
+  //     if (!targetCollection) {
+  //       console.log("Target collection not found. Ensure the collection name matches exactly.");
+  //       return;
+  //     }
   
-      const COLLECTION_ID = targetCollection.id;
-      console.log(`Using Collection ID: ${COLLECTION_ID}`);
+  //     const COLLECTION_ID = targetCollection.id;
+  //     console.log(`Using Collection ID: ${COLLECTION_ID}`);
   
-      // Fetch items in the collection
-      const itemsResponse = await axios.get(`${API_BASE_URL}/collections/${COLLECTION_ID}/items`, {
-        headers: {
-          Authorization: `Bearer ${webflowApiKey}`,
-          "Accept-Version": "1.0.0",
-        },
-      });
+  //     // Fetch items in the collection
+  //     const itemsResponse = await axios.get(`${API_BASE_URL}/collections/${COLLECTION_ID}/items`, {
+  //       headers: {
+  //         Authorization: `Bearer ${webflowApiKey}`,
+  //         "Accept-Version": "1.0.0",
+  //       },
+  //     });
   
-      const items = itemsResponse.data.items || [];
+  //     const items = itemsResponse.data.items || [];
   
-      // Filter out items where 'lastPublished' is null or if they have been updated since last publication
-      const stagedItemIds = items
-        .filter((item) => {
-          // If the item has not been published yet or has been updated since its last publish
-          return item.lastPublished === null || new Date(item.lastUpdated) > new Date(item.lastPublished);
-        })
-        .map((item) => item.id);
+  //     // Filter out items where 'lastPublished' is null or if they have been updated since last publication
+  //     const stagedItemIds = items
+  //       .filter((item) => {
+  //         // If the item has not been published yet or has been updated since its last publish
+  //         return item.lastPublished === null || new Date(item.lastUpdated) > new Date(item.lastPublished);
+  //       })
+  //       .map((item) => item.id);
   
-      if (!stagedItemIds.length) {
-        console.log("No items to publish.");
-        return;
-      }
+  //     if (!stagedItemIds.length) {
+  //       console.log("No items to publish.");
+  //       return;
+  //     }
   
-      console.log(`Items ready for publishing: ${stagedItemIds}`);
+  //     console.log(`Items ready for publishing: ${stagedItemIds}`);
   
-      // Publish the items
-      const publishResponse = await axios.post(
-        `${API_BASE_URL}/collections/${COLLECTION_ID}/items/publish`,
-        { itemIds: stagedItemIds },
-        {
-          headers: {
-            Authorization: `Bearer ${webflowApiKey}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+  //     // Publish the items
+  //     const publishResponse = await axios.post(
+  //       `${API_BASE_URL}/collections/${COLLECTION_ID}/items/publish`,
+  //       { itemIds: stagedItemIds },
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${webflowApiKey}`,
+  //           "Content-Type": "application/json",
+  //         },
+  //       }
+  //     );
   
-      console.log("Publish Response:", publishResponse.data);
-    } catch (error) {
-      console.error("Error publishing staged items:", error.response?.data || error.message);
-    }
-  }
+  //     console.log("Publish Response:", publishResponse.data);
+  //   } catch (error) {
+  //     console.error("Error publishing staged items:", error.response?.data || error.message);
+  //   }
+  // }
   
-  publishStagedItems();
+  // publishStagedItems();
   
   
-  async function runPeriodicallys(intervalMs) {
-    console.log("Starting periodic sync...");
-    setInterval(async () => {
-      console.log(`Running sync at ${new Date().toISOString()}`);
-      await publishStagedItems(); 
-    }, intervalMs);
-  }
+  // async function runPeriodicallys(intervalMs) {
+  //   console.log("Starting periodic sync...");
+  //   setInterval(async () => {
+  //     console.log(`Running sync at ${new Date().toISOString()}`);
+  //     await publishStagedItems(); 
+  //   }, intervalMs);
+  // }
   
-  runPeriodicallys(15 * 1000); 
+  // runPeriodicallys(15 * 1000); 
   
 const PORT = process.env.PORT || 6000;
 app.listen(PORT, () => {
