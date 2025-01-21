@@ -142,10 +142,10 @@ async function syncAirtableToWebflow() {
   const webflowRecords = await getWebflowRecords();
 
   const webflowItemMap = webflowRecords.reduce((map, item) => {
-      if (item && item.fieldData && item.fieldData.airtableid) {
-          map[item.fieldData.airtableid] = item;
-      }
-      return map;
+    if (item && item.fieldData && item.fieldData.airtableid) {
+      map[item.fieldData.airtableid] = item;
+    }
+    return map;
   }, {});
 
   console.log('Webflow Item Map:', webflowItemMap);
@@ -153,46 +153,39 @@ async function syncAirtableToWebflow() {
   const airtableRecordIds = new Set(classRecords.map(record => record.id));
 
   for (const airtableRecord of classRecords) {
-      const airtableFields = {
-          name: airtableRecord.fields.Name || '',
-          slug: airtableRecord.fields.Name
-              ? airtableRecord.fields.Name.toLowerCase().replace(/[^a-z0-9]+/g, '-')
-              : '',
-          year: airtableRecord.fields.Year || '',
-          'award-winner-image': airtableRecord.fields['Award winner image']?.[0]?.url || '',
-          airtableid: airtableRecord.id,
-      };
+    const airtableFields = {
+      name: airtableRecord.fields.Name || '',
+      slug: airtableRecord.fields.Name
+        ? airtableRecord.fields.Name.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+        : '',
+      year: airtableRecord.fields.Year || '',
+      'award-winner-image': airtableRecord.fields['Award winner image']?.[0]?.url || '',
+      airtableid: airtableRecord.id,
+    };
 
-      const existingWebflowItem = webflowItemMap[airtableFields.airtableid];
+    const existingWebflowItem = webflowItemMap[airtableFields.airtableid];
 
-      if (existingWebflowItem) {
-          // Skip updates for draft items
-          if (existingWebflowItem.isDraft) {
-              console.log(`Skipping update for draft item with airtableid ${airtableFields.airtableid}`);
-              continue;
-          }
-
-          if (await hasDifferences(airtableFields, existingWebflowItem.fieldData)) {
-              console.log(`Updating Webflow item with airtableid ${airtableFields.airtableid}`);
-              await updateWebflowItem(webflowCollectionId, existingWebflowItem.id, airtableFields);
-          } else {
-              console.log(`No changes for Webflow item with airtableid ${airtableFields.airtableid}. Skipping update.`);
-          }
+    if (existingWebflowItem) {
+      if (await hasDifferences(airtableFields, existingWebflowItem.fieldData)) {
+        console.log(`Updating Webflow item with airtableid ${airtableFields.airtableid}`);
+        await updateWebflowItem(existingWebflowItem.id, airtableFields);
       } else {
-          console.log('Adding new record to Webflow:', airtableFields.name);
-          await addWebflowItem(airtableFields);
+        console.log(`No changes for Webflow item with airtableid ${airtableFields.airtableid}. Skipping update.`);
       }
+    } else {
+      console.log('Adding new record to Webflow:', airtableFields.name);
+      await addWebflowItem(airtableFields);
+    }
   }
 
   for (const webflowItem of webflowRecords) {
-      const airtableid = webflowItem.fieldData?.airtableid;
-      if (airtableid && !airtableRecordIds.has(airtableid)) {
-          console.log(`Deleting Webflow item with ID ${webflowItem.id} as it no longer exists in Airtable.`);
-          await deleteWebflowItem(webflowItem.id);
-      }
+    const airtableid = webflowItem.fieldData?.airtableid;
+    if (airtableid && !airtableRecordIds.has(airtableid)) {
+      console.log(`Deleting Webflow item with ID ${webflowItem.id} as it no longer exists in Airtable.`);
+      await deleteWebflowItem(webflowItem.id);
+    }
   }
 }
-
 
 // Update Webflow Item
 async function updateWebflowItem(webflowId, fieldsToUpdate) {
@@ -309,7 +302,7 @@ syncAirtableToWebflow();
   });
   
 
-const PORT = process.env.PORT || 6000;
+  const PORT = process.env.PORT || 6000;
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
